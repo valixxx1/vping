@@ -23,23 +23,6 @@ typedef int32_t i32;
 typedef int16_t i16;
 typedef int8_t  i8;
 
-/* If cmd isn't success, print msg_err and exit (if fatal),
- * else print msg_suc */
-/*
-#define onerr(cmd, msg_err, fatal, msg_suc) \
-  do {                                      \
-    if ((cmd == -1 || cmd == 0) && fatal) { \
-      fputs(msg_err, stderr);               \
-      exit(-1);                             \
-    } else if (cmd == -1 || cmd == 0) {     \
-      fputs(msg_err, stderr);               \
-    } else {                                \
-      if (msg_suc != 0)                     \
-      printf(msg_suc);                      \
-    }                                       \
-  } while (0)
-*/
-
 u16 checksum(void *b, i32 len)
 {
     u16 *buf = b;
@@ -83,22 +66,21 @@ char* getipbydom(char dom[])
 
 #define reset(buf) memset(&buf, 0, sizeof(buf))
 
-#define fill_sockaddr_in(addr, ip)                                   \
-  do {                                                               \
-    reset(addr);                                                     \
-    addr.sin_family = AF_INET;                                       \
-    int inet_ptoned = inet_pton(AF_INET, ip, &addr.sin_addr.s_addr); \
-    if (!inet_ptoned) {                                              \
-      char *new_ip = getipbydom(ip);                                 \
-      inet_pton(AF_INET, new_ip, &addr.sin_addr.s_addr);             \
-      printf("PING sending to %s\n", new_ip);                        \
-    } else if (inet_ptoned == -1) {                                  \
-      puts("IP isn't correct!");                                     \
-      exit(-1);                                                      \
-    } else {                                                         \
-      printf("PING sending to %s\n", ip);                            \
-    }                                                                \
-  } while (0)
+void fill_sockaddr_in(struct sockaddr_in *addr, char *ip) {
+  reset(*addr);
+  addr->sin_family = AF_INET;
+  int inet_ptoned = inet_pton(AF_INET, ip, &addr->sin_addr.s_addr);
+  if (!inet_ptoned) {
+    char *new_ip = getipbydom(ip);
+    inet_pton(AF_INET, new_ip, &addr->sin_addr.s_addr);
+    printf("PING sending to %s\n", new_ip);
+  } else if (inet_ptoned == -1) {
+    puts("IP isn't correct!");
+    exit(-1);
+  } else {
+    printf("PING sending to %s\n", ip);
+  }
+}
 
 #define fill_icmphdr(icmph)                            \
   do {                                                 \
@@ -138,7 +120,7 @@ int main(int argc, char *argv[])
   }
 
   struct sockaddr_in dest;
-  fill_sockaddr_in(dest, argv[1]);
+  fill_sockaddr_in(&dest, argv[1]);
 
   char buf[64];
   reset(buf);
